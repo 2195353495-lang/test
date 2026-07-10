@@ -9,7 +9,7 @@ export function SymbolToolbar({ onAdd }: Props) {
   return (
     <aside className="panel symbol-panel">
       <h2>符号库</h2>
-      <p className="hint">点击添加至画布，双击设备可改名</p>
+      <p className="hint">点击添加至画布，双击设备可改名。右键拖动画布，Shift 框选。</p>
       <ul className="symbol-list">
         {SYMBOL_LIBRARY.map((s) => (
           <li key={s.type}>

@@ -77,7 +77,7 @@ export function TopologyCanvas({
     const graph: Graph = new Graph({
       container: containerRef.current,
       grid: { visible: true, type: 'dot', args: { color: '#d5d8dc', thickness: 1 } },
-      panning: { enabled: true, eventTypes: ['leftMouseDown'] },
+      panning: { enabled: true, eventTypes: ['rightMouseDown', 'mouseWheel'] },
       mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
       connecting: {
         allowBlank: false,
@@ -112,6 +112,7 @@ export function TopologyCanvas({
         enabled: true,
         multiple: true,
         rubberband: true,
+        modifiers: ['shift'],
         showNodeSelectionBox: true,
         pointerEvents: 'none',
       }),
