@@ -1,19 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
 :root {
-  --bg: #eef2f5;
-  --panel: #f7f9fb;
-  --ink: #1c2833;
-  --muted: #5d6d7e;
-  --line: #d5dde5;
-  --accent: #1f6f5b;
-  --accent-ink: #0f3d32;
-  --fault: #c0392b;
-  --source: #2980b9;
-  --load: #d35400;
-  --open: #7f8c8d;
-  --shadow: 0 1px 0 rgba(28, 40, 51, 0.06);
-  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --bg: #061018;
+  --panel: #0d1c2a;
+  --ink: #d6e4f0;
+  --muted: #7f97ad;
+  --line: #1e3348;
+  --accent: #1f8a70;
+  --accent-ink: #b8f0de;
+  --fault: #ff4d4f;
+  --source: #40a9ff;
+  --load: #ffa940;
+  --open: #52c41a;
+  --closed: #f5222d;
+  --v220: #c039c6;
+  --v110: #f1c40f;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  font-family: 'Noto Sans SC', 'IBM Plex Sans', 'Microsoft YaHei', sans-serif;
   color: var(--ink);
   background: var(--bg);
   line-height: 1.45;

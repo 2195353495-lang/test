@@ -2,10 +2,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(1200px 500px at 10% -10%, rgba(31, 111, 91, 0.12), transparent 60%),
-    radial-gradient(900px 400px at 90% 0%, rgba(41, 128, 185, 0.1), transparent 55%),
-    linear-gradient(180deg, #e8eef3 0%, #eef2f5 40%, #e6ebf0 100%);
+  background: linear-gradient(180deg, #071421 0%, #0a1826 100%);
 }
 
 .topbar {
@@ -15,27 +12,25 @@
   gap: 12px 16px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 249, 251, 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 24, 38, 0.96);
   box-shadow: var(--shadow);
 }
 
 .brand {
   display: flex;
   flex-direction: column;
-  min-width: 160px;
+  min-width: 180px;
 }
 
 .brand-mark {
-  font-family: 'IBM Plex Serif', Georgia, serif;
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--accent-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #9ec5e8;
 }
 
 .brand-sub {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--muted);
 }
 
@@ -48,43 +43,43 @@
 
 .mode-group button,
 .actions button {
-  border: 1px solid var(--line);
-  background: #fff;
+  border: 1px solid #2a455f;
+  background: #122536;
   color: var(--ink);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 6px 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .mode-group button.active {
-  border-color: var(--accent);
-  background: rgba(31, 111, 91, 0.1);
+  border-color: #2aa889;
+  background: rgba(31, 138, 112, 0.22);
   color: var(--accent-ink);
   font-weight: 600;
 }
 
 .actions button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #1f8a70;
+  border-color: #1f8a70;
   color: #fff;
   font-weight: 600;
 }
 
 .actions button:hover,
 .mode-group button:hover {
-  border-color: #aab7c4;
+  border-color: #4a6f8f;
 }
 
 .workspace {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 200px 1fr 260px;
+  grid-template-columns: 210px 1fr 270px;
   gap: 0;
 }
 
 .panel {
-  background: rgba(247, 249, 251, 0.95);
+  background: rgba(10, 24, 38, 0.98);
   border-right: 1px solid var(--line);
   padding: 14px 12px;
   overflow: auto;
@@ -97,13 +92,13 @@
 
 .panel h2 {
   margin: 0 0 6px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  color: #9ec5e8;
 }
 
 .panel h3 {
   margin: 12px 0 6px;
-  font-size: 0.8rem;
-  text-transform: none;
+  font-size: 0.78rem;
   color: var(--muted);
   font-weight: 600;
 }
@@ -119,7 +114,7 @@
 .hint,
 .muted {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .symbol-list {
@@ -135,82 +130,98 @@
   align-items: center;
   gap: 8px;
   text-align: left;
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 6px;
+  border: 1px solid #2a455f;
+  background: #122536;
+  border-radius: 4px;
   padding: 8px 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  color: var(--ink);
 }
 
 .symbol-list button:hover {
-  border-color: var(--accent);
+  border-color: #2aa889;
 }
 
 .glyph {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #2c3e50;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
 .glyph-bus {
   height: 4px;
-  border-radius: 0;
-  background: #1a1a1a;
-  border: none;
+  background: var(--v220);
   align-self: center;
 }
 
 .glyph-breaker {
-  border-radius: 2px;
-  background: #2c3e50;
+  width: 12px;
+  height: 16px;
+  background: var(--closed);
+  border: 1px solid var(--closed);
 }
 
 .glyph-disconnector {
-  border: none;
+  width: 14px;
+  height: 14px;
   background:
-    linear-gradient(#2c3e50, #2c3e50) center/100% 2px no-repeat,
-    linear-gradient(#2c3e50, #2c3e50) center/2px 100% no-repeat;
+    linear-gradient(var(--v220), var(--v220)) center/2px 100% no-repeat,
+    linear-gradient(125deg, transparent 46%, var(--v220) 46%, var(--v220) 54%, transparent 54%);
 }
 
 .glyph-transformer {
+  border: 2px solid var(--v220);
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
 }
 
 .glyph-load {
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  background: #ecf0f1;
-  border: none;
-  outline: 1px solid #2c3e50;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 12px solid var(--v110);
+  background: transparent;
 }
 
 .glyph-powerSource {
   border-radius: 50%;
-  border-color: #27ae60;
-  background: #e8f8f0;
+  border: 2px solid var(--v220);
+  background: #0a1622;
 }
 
 .glyph-station {
-  border-style: dashed;
-  border-color: #95a5a6;
-  background: rgba(236, 240, 241, 0.7);
+  border: 1px solid #5c7a99;
+  background: rgba(15, 35, 55, 0.8);
 }
 
 .legend {
-  margin-top: 20px;
-  font-size: 0.8rem;
+  margin-top: 18px;
+  font-size: 0.78rem;
   color: var(--muted);
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+.legend .volt {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.legend .volt span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .swatch {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 1px;
   margin-right: 6px;
 }
 
@@ -230,24 +241,23 @@
   background: var(--open);
 }
 
+.swatch.closed {
+  background: var(--closed);
+}
+
+.swatch.v220 {
+  background: var(--v220);
+}
+
+.swatch.v110 {
+  background: var(--v110);
+}
+
 .canvas-wrap {
   min-width: 0;
   min-height: 0;
   position: relative;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.15)),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 23px,
-      rgba(148, 163, 184, 0.08) 24px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 23px,
-      rgba(148, 163, 184, 0.08) 24px
-    );
+  background: #071421;
 }
 
 .canvas-host {
@@ -259,12 +269,12 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .result-blocks section p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
 

@@ -97,8 +97,8 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">主网拓扑</span>
-          <span className="brand-sub">手绘 · 影响范围分析验证</span>
+          <span className="brand-mark">主网单线图</span>
+          <span className="brand-sub">D5000 风格 · 影响范围分析验证</span>
         </div>
         <div className="mode-group" role="toolbar" aria-label="交互模式">
           {MODES.map((m) => (

@@ -76,7 +76,15 @@ export function TopologyCanvas({
 
     const graph: Graph = new Graph({
       container: containerRef.current,
-      grid: { visible: true, type: 'dot', args: { color: '#d5d8dc', thickness: 1 } },
+      background: { color: '#071421' },
+      grid: {
+        visible: true,
+        type: 'doubleMesh',
+        args: [
+          { color: '#122536', thickness: 1 },
+          { color: '#183247', thickness: 1, factor: 5 },
+        ],
+      },
       panning: { enabled: true, eventTypes: ['rightMouseDown', 'mouseWheel'] },
       mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
       connecting: {
@@ -85,16 +93,19 @@ export function TopologyCanvas({
         allowNode: true,
         allowEdge: false,
         snap: true,
-        connector: 'normal',
+        router: { name: 'orth', args: { padding: 8 } },
+        connector: { name: 'rounded', args: { radius: 2 } },
         createEdge() {
           return new Shape.Edge({
             attrs: {
               line: {
-                stroke: '#566573',
+                stroke: '#c039c6',
                 strokeWidth: 2,
                 targetMarker: null,
               },
             },
+            router: { name: 'orth', args: { padding: 8 } },
+            connector: { name: 'rounded', args: { radius: 2 } },
           })
         },
       },
@@ -167,11 +178,13 @@ export function TopologyCanvas({
         }
         graph.addEdge({
           id: nextId('edge'),
-          source: { cell: src, port: 'port' },
-          target: { cell: node.id, port: 'port' },
+          source: { cell: src, port: 'bottom' },
+          target: { cell: node.id, port: 'top' },
           attrs: {
-            line: { stroke: '#566573', strokeWidth: 2, targetMarker: null },
+            line: { stroke: '#c039c6', strokeWidth: 2, targetMarker: null },
           },
+          router: { name: 'orth', args: { padding: 8 } },
+          connector: { name: 'rounded', args: { radius: 2 } },
         })
         connectSourceRef.current = null
         syncExport()
@@ -217,6 +230,7 @@ export function TopologyCanvas({
       id,
       type: def.type,
       name: pendingAdd.name || def.defaultName,
+      voltage: def.defaultVoltage,
       closed: def.switchable ? true : undefined,
       isPowerSource: def.type === 'powerSource',
       x: 120 + Math.random() * 80,
