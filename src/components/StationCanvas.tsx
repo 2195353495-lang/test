@@ -4,9 +4,15 @@ import type { Node } from '@antv/x6'
 import { Snapline } from '@antv/x6-plugin-snapline'
 import { Selection } from '@antv/x6-plugin-selection'
 import { Keyboard } from '@antv/x6-plugin-keyboard'
-import type { ImpactAnalysisResult, InteractionMode, TopologyGraph } from '../domain/types'
-import { analyzeImpact } from '../domain/connectivityAnalyzer'
-import { sampleThreeStationGraph } from '../domain/sampleGraph'
+import type {
+  CrossStationImpactResult,
+  GridProject,
+  HighlightContext,
+  InteractionMode,
+  StationDoc,
+} from '../domain/types'
+import { analyzeImpactCrossStation } from '../domain/crossStationAnalyzer'
+import { removeDeviceWithCascade, syncPortsFromGraph } from '../domain/projectStore'
 import { SYMBOL_LIBRARY } from '../domain/symbols'
 import {
   applyImpactHighlight,
@@ -18,17 +24,18 @@ import {
 } from '../domain/graphBridge'
 
 interface Props {
+  project: GridProject
+  stationId: string
   mode: InteractionMode
   faultId: string | null
   onFaultChange: (id: string | null) => void
-  onResult: (result: ImpactAnalysisResult | null) => void
-  onGraphChange: (graph: TopologyGraph) => void
-  pendingAdd: { type: string; name: string } | null
+  onResult: (result: CrossStationImpactResult | null) => void
+  onProjectChange: (project: GridProject) => void
+  pendingAdd: { type: string; name: string; isBoundary?: boolean } | null
   onPendingConsumed: () => void
   analyzeToken: number
   clearToken: number
-  loadToken: number
-  loadData: TopologyGraph | null
+  highlightContext: HighlightContext | null
 }
 
 let idSeq = 1
@@ -37,42 +44,81 @@ function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${idSeq}`
 }
 
-export function TopologyCanvas({
+export function StationCanvas({
+  project,
+  stationId,
   mode,
   faultId,
   onFaultChange,
   onResult,
-  onGraphChange,
+  onProjectChange,
   pendingAdd,
   onPendingConsumed,
   analyzeToken,
   clearToken,
-  loadToken,
-  loadData,
+  highlightContext,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<Graph | null>(null)
   const connectSourceRef = useRef<string | null>(null)
   const modeRef = useRef(mode)
   const faultRef = useRef(faultId)
+  const projectRef = useRef(project)
+  const stationIdRef = useRef(stationId)
 
   useEffect(() => {
     modeRef.current = mode
   }, [mode])
-
   useEffect(() => {
     faultRef.current = faultId
   }, [faultId])
+  useEffect(() => {
+    projectRef.current = project
+  }, [project])
+  useEffect(() => {
+    stationIdRef.current = stationId
+  }, [stationId])
+
+  const pushStationGraph = useCallback(
+    (graphData: ReturnType<typeof exportGraphFromX6>) => {
+      const proj = projectRef.current
+      const sid = stationIdRef.current
+      const prev = proj.stations[sid]
+      if (!prev) return
+      let nextStation: StationDoc = syncPortsFromGraph({
+        ...prev,
+        graph: graphData,
+      })
+      // mark boundary from node flags
+      nextStation = {
+        ...nextStation,
+        graph: {
+          ...nextStation.graph,
+          nodes: nextStation.graph.nodes.map((n) => ({
+            ...n,
+            stationId: sid,
+          })),
+        },
+      }
+      onProjectChange({
+        ...proj,
+        stations: { ...proj.stations, [sid]: nextStation },
+      })
+    },
+    [onProjectChange],
+  )
 
   const syncExport = useCallback(() => {
     const g = graphRef.current
     if (!g) return
-    onGraphChange(exportGraphFromX6(g))
-  }, [onGraphChange])
+    pushStationGraph(exportGraphFromX6(g))
+  }, [pushStationGraph])
 
   useEffect(() => {
     if (!containerRef.current) return
     registerPowerShapes()
+    const station = projectRef.current.stations[stationIdRef.current]
+    if (!station) return
 
     const graph: Graph = new Graph({
       container: containerRef.current,
@@ -109,12 +155,6 @@ export function TopologyCanvas({
           })
         },
       },
-      highlighting: {
-        magnetAdsorbed: {
-          name: 'stroke',
-          args: { attrs: { fill: '#fff', stroke: '#5b8ff9', strokeWidth: 3 } },
-        },
-      },
     })
 
     graph.use(new Snapline({ enabled: true }))
@@ -132,10 +172,30 @@ export function TopologyCanvas({
 
     graph.bindKey(['backspace', 'delete'], () => {
       const cells = graph.getSelectedCells()
-      if (cells.length) {
-        graph.removeCells(cells)
-        syncExport()
+      if (!cells.length) return
+      let proj = projectRef.current
+      const sid = stationIdRef.current
+      for (const cell of cells) {
+        if (cell.isNode()) {
+          proj = removeDeviceWithCascade(proj, sid, cell.id)
+        }
       }
+      // remove edges from current graph export after cascade
+      const st = proj.stations[sid]
+      if (st) {
+        const edgeIds = new Set(
+          cells.filter((c) => c.isEdge()).map((c) => c.id),
+        )
+        if (edgeIds.size) {
+          st.graph.edges = st.graph.edges.filter((e) => !edgeIds.has(e.id))
+          proj = {
+            ...proj,
+            stations: { ...proj.stations, [sid]: st },
+          }
+        }
+      }
+      onProjectChange(proj)
+      loadGraphIntoX6(graph, proj.stations[sid].graph)
     })
 
     graph.on('node:click', ({ node, e }: { node: Node; e: MouseEvent }) => {
@@ -150,21 +210,18 @@ export function TopologyCanvas({
         syncExport()
         return
       }
-
       if (m === 'setPower') {
         e.stopPropagation()
-        const next = !data.isPowerSource
-        node.setData({ ...data, isPowerSource: type === 'powerSource' ? true : next })
+        const next = type === 'powerSource' ? true : !data.isPowerSource
+        node.setData({ ...data, isPowerSource: next })
         syncExport()
         return
       }
-
       if (m === 'setFault') {
         e.stopPropagation()
         onFaultChange(node.id)
         return
       }
-
       if (m === 'connect') {
         e.stopPropagation()
         const src = connectSourceRef.current
@@ -195,7 +252,12 @@ export function TopologyCanvas({
       const data = (node.getData() ?? {}) as Record<string, unknown>
       const name = window.prompt('设备名称', String(data.name ?? ''))
       if (name == null) return
-      node.setData({ ...data, name })
+      const boundaryAns = window.prompt(
+        '是否作为边界端口（供总览联络线绑定）？输入 1=是，0=否',
+        data.isBoundary ? '1' : '0',
+      )
+      const isBoundary = boundaryAns === '1'
+      node.setData({ ...data, name, isBoundary })
       node.attr('label/text', name)
       syncExport()
     })
@@ -203,14 +265,12 @@ export function TopologyCanvas({
     graph.on('node:moved', () => syncExport())
     graph.on('edge:connected', () => syncExport())
 
-    loadGraphIntoX6(graph, sampleThreeStationGraph)
+    loadGraphIntoX6(graph, station.graph)
     graphRef.current = graph
-    onGraphChange(exportGraphFromX6(graph))
 
     const ro = new ResizeObserver(() => {
       if (!containerRef.current) return
-      const { clientWidth, clientHeight } = containerRef.current
-      graph.resize(clientWidth, clientHeight)
+      graph.resize(containerRef.current.clientWidth, containerRef.current.clientHeight)
     })
     ro.observe(containerRef.current)
 
@@ -219,7 +279,22 @@ export function TopologyCanvas({
       graph.dispose()
       graphRef.current = null
     }
-  }, [onFaultChange, onGraphChange, syncExport])
+  }, [stationId, onFaultChange, onProjectChange, syncExport])
+
+  // Reload graph when station doc identity changes externally (e.g. import)
+  useEffect(() => {
+    const g = graphRef.current
+    const st = project.stations[stationId]
+    if (!g || !st) return
+    // Avoid clobbering during local edits: only reload if node count/id set differs
+    const currentIds = new Set(g.getNodes().map((n) => n.id))
+    const nextIds = new Set(st.graph.nodes.map((n) => n.id))
+    const same =
+      currentIds.size === nextIds.size && [...currentIds].every((id) => nextIds.has(id))
+    if (!same) {
+      loadGraphIntoX6(g, st.graph)
+    }
+  }, [project, stationId])
 
   useEffect(() => {
     if (!pendingAdd || !graphRef.current) return
@@ -231,8 +306,10 @@ export function TopologyCanvas({
       type: def.type,
       name: pendingAdd.name || def.defaultName,
       voltage: def.defaultVoltage,
+      stationId,
       closed: def.switchable ? true : undefined,
       isPowerSource: def.type === 'powerSource',
+      isBoundary: Boolean(pendingAdd.isBoundary),
       x: 120 + Math.random() * 80,
       y: 120 + Math.random() * 80,
       width: def.width,
@@ -241,26 +318,41 @@ export function TopologyCanvas({
     graphRef.current.addNode(nodeToX6Config(node))
     onPendingConsumed()
     syncExport()
-  }, [pendingAdd, onPendingConsumed, syncExport])
+  }, [pendingAdd, onPendingConsumed, syncExport, stationId])
 
   useEffect(() => {
     if (!analyzeToken || !graphRef.current) return
-    const data = exportGraphFromX6(graphRef.current)
     const fault = faultRef.current
     if (!fault) {
       onResult(null)
       window.alert('请先用「设故障点」模式点击一个设备')
       return
     }
-    const result = analyzeImpact(data, fault)
+    // sync latest graph first
+    const graphData = exportGraphFromX6(graphRef.current)
+    const proj = {
+      ...projectRef.current,
+      stations: {
+        ...projectRef.current.stations,
+        [stationIdRef.current]: syncPortsFromGraph({
+          ...projectRef.current.stations[stationIdRef.current],
+          graph: graphData,
+        }),
+      },
+    }
+    const result = analyzeImpactCrossStation(proj, stationIdRef.current, fault)
     onResult(result)
+    const localIds = new Set(graphData.nodes.map((n) => n.id))
     applyImpactHighlight(graphRef.current, {
       faultId: fault,
-      sourceSide: new Set(result.sourceSide),
-      loadSide: new Set(result.loadSide),
+      sourceSide: new Set(result.sourceSide.filter((id) => localIds.has(id))),
+      loadSide: new Set(result.loadSide.filter((id) => localIds.has(id))),
       openSwitches: new Set(
-        data.nodes
-          .filter((n) => (n.type === 'breaker' || n.type === 'disconnector') && n.closed === false)
+        graphData.nodes
+          .filter(
+            (n) =>
+              (n.type === 'breaker' || n.type === 'disconnector') && n.closed === false,
+          )
           .map((n) => n.id),
       ),
     })
@@ -278,21 +370,34 @@ export function TopologyCanvas({
   }, [clearToken, onResult])
 
   useEffect(() => {
-    if (!loadToken || !loadData || !graphRef.current) return
-    loadGraphIntoX6(graphRef.current, loadData)
-    onGraphChange(loadData)
-    onResult(null)
-  }, [loadToken, loadData, onGraphChange, onResult])
+    const g = graphRef.current
+    if (!g || !highlightContext) return
+    const ids = highlightContext.remoteHighlights[stationId] ?? []
+    const idSet = new Set(ids)
+    const sourceSide = new Set(
+      highlightContext.sourceSide.filter((id) => idSet.has(id)),
+    )
+    const loadSide = new Set(highlightContext.loadSide.filter((id) => idSet.has(id)))
+    applyImpactHighlight(g, {
+      faultId:
+        highlightContext.faultStationId === stationId
+          ? highlightContext.faultNodeId
+          : null,
+      sourceSide,
+      loadSide,
+      openSwitches: new Set(),
+    })
+  }, [highlightContext, stationId])
 
   useEffect(() => {
     const g = graphRef.current
     if (!g) return
     for (const node of g.getNodes()) {
       if (node.id === faultId) {
-        node.attr('label/fill', '#c0392b')
+        node.attr('label/fill', '#ff4d4f')
         node.attr('label/fontWeight', 700)
       } else {
-        node.attr('label/fill', '#34495e')
+        node.attr('label/fill', '#a8bdd0')
         node.attr('label/fontWeight', 400)
       }
     }

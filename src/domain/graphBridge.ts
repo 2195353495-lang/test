@@ -516,6 +516,7 @@ export function nodeToX6Config(node: TopologyNode): Record<string, unknown> {
       stationId: node.stationId,
       closed: node.closed,
       isPowerSource: node.isPowerSource || node.type === 'powerSource',
+      isBoundary: Boolean(node.isBoundary),
     },
   }
 }
@@ -598,6 +599,7 @@ export function exportGraphFromX6(graph: Graph): TopologyGraph {
       stationId: data.stationId as string | undefined,
       closed: SWITCHABLE.has(type) ? data.closed !== false : undefined,
       isPowerSource: Boolean(data.isPowerSource) || type === 'powerSource',
+      isBoundary: Boolean(data.isBoundary),
       x: pos.x,
       y: pos.y,
       width: size.width,

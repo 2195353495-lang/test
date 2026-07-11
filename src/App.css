@@ -22,6 +22,21 @@
   min-width: 180px;
 }
 
+.brand-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.brand-btn:hover .brand-mark {
+  color: #b8d9f5;
+}
+
 .brand-mark {
   font-size: 1.05rem;
   font-weight: 700;
@@ -272,10 +287,20 @@
   font-size: 0.8rem;
 }
 
-.result-blocks section p {
-  margin: 0;
-  font-size: 0.88rem;
-  font-weight: 600;
+.jump-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+button.linkish {
+  border: none;
+  background: transparent;
+  color: #40a9ff;
+  padding: 0;
+  font-size: 0.75rem;
+  text-decoration: underline;
 }
 
 @media (max-width: 960px) {
